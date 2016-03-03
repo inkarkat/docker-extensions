@@ -1,0 +1,5 @@
+#!/bin/sh
+
+container=${1:?}; shift
+
+exec docker exec -it "$container" bash "$@"
