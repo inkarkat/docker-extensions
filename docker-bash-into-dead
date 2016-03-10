@@ -2,4 +2,12 @@
 
 container=${1:?}; shift
 
-exec docker exec -it "$container" bash "$@"
+finally()
+{
+    docker rm $(docker ps -aq --filter name=temp_bash) 2>/dev/null
+    docker rmi temp_bash
+}
+trap 'finally' EXIT
+
+docker commit "$container" temp_bash
+docker run --name=temp_bash --entrypoint=bash -it temp_bash "$@"
