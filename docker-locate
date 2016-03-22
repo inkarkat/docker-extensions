@@ -1,0 +1,10 @@
+#!/bin/bash
+
+lastArg=${!#}
+
+id=$(docker ps -q "${@:1:$(($#-1))}" --filter "id=$lastArg")
+[ "$id" ] || id=$(docker ps -q "${@:1:$(($#-1))}" --filter "name=$lastArg")
+[ "$id" ] || id=$(docker ps -q "${@:1:$(($#-1))}" --filter "ancestor=$lastArg")
+[ "$id" ] || { echo >&2 "Warning: Could not locate $lastArg"; id=$lastArg; }
+
+printf '%s\n' "$id"
