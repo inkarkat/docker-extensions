@@ -9,5 +9,5 @@ finally()
 }
 trap 'finally' EXIT
 
-docker commit "$container" temp_bash
+docker commit "$container" temp_bash || exit $?
 docker run --name=temp_bash --entrypoint=bash -it temp_bash "$@"
