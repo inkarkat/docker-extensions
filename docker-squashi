@@ -1,0 +1,51 @@
+#!/bin/bash
+
+set -eu
+
+if ! type -t docker-squash >/dev/null; then
+    echo >&2 "docker-squash not found. Install from https://github.com/jwilder/docker-squash first!"
+    exit 1
+fi
+
+printUsage()
+{
+    cat <<HELPTEXT
+Squash the layers of a Docker IMAGE. Overrides the original image unless -t is given.
+Usage: "$(basename "$1")" [-from string] [-keepTemp] [-t string] [-verbose] [-?|-h|--help] [-- DOCKER-ARGS] IMAGE
+HELPTEXT
+}
+
+typeset -a allargs=()
+isTagged=
+while [ $# -ne 0 ]
+do
+    case "$1" in
+	--help|-h|-\?)		shift; printUsage "$0"; exit 0;;
+	-t)			isTagged=t; newImage="$2"; allargs+=("$1" "$2"); shift; shift;;
+	-from)			allargs+=("$1" "$2"); shift; shift;;
+	-keepTemp|-verbose)	allargs+=("$1"); shift;;
+	--)			shift; break;;
+	*)			break;;
+    esac
+done
+[ $# -ge 1 ] || { printUsage "$0"; exit 2; }
+if [ ! "$isTagged" ]; then
+    origImage="${!#}"
+    tempImage=${origImage%%:*}
+    tempImage=${tempImage}:squashed
+    newImage=$tempImage
+    allargs+=(-t "$tempImage")
+fi
+
+set -o pipefail
+docker save "$@" | sudo TMPDIR="${TMPDIR:-}" docker-squash "${allargs[@]}" | docker load
+
+beforeSize=$(docker inspect --format "{{.VirtualSize}}" "$origImage")
+afterSize=$(docker inspect --format "{{.VirtualSize}}" "$newImage")
+diffSize=$(expr "$beforeSize" - "$afterSize")
+printf 'Image size changed from %s to %s, reduction by %s = %d%%.\n' "$(humanunits <<< "$beforeSize")" "$(humanunits <<< "$afterSize")" "$(humanunits <<< "$diffSize")" "$(expr "$diffSize" \* 100 / "$beforeSize")"
+
+if [ ! "$isTagged" ]; then
+    docker tag -f "$tempImage" "$origImage"
+    docker rmi "$tempImage"
+fi
