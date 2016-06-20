@@ -18,6 +18,11 @@ Usage: "$(basename "$1")" [-from string] [-keepTemp] [-t string] [-verbose] [-cl
 HELPTEXT
 }
 
+type -t humanunits >/dev/null || humanunits()
+{
+    numfmt --invalid=ignore --to=iec
+}
+
 typeset -a allargs=()
 isTagged=
 isClean=
@@ -45,8 +50,8 @@ fi
 set -o pipefail
 docker save "$@" | sudo TMPDIR="${TMPDIR:-}" docker-squash "${allargs[@]}" | docker load
 
-beforeSize=$(docker inspect --format "{{.VirtualSize}}" "$origImage")
-afterSize=$(docker inspect --format "{{.VirtualSize}}" "$newImage")
+beforeSize=$(docker-size "$origImage")
+afterSize=$(docker-size "$newImage")
 diffSize=$(expr "$beforeSize" - "$afterSize")
 printf 'Image size changed from %s to %s, reduction by %s = %d%%.\n' "$(humanunits <<< "$beforeSize")" "$(humanunits <<< "$afterSize")" "$(humanunits <<< "$diffSize")" "$(expr "$diffSize" \* 100 / "$beforeSize")"
 
