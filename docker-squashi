@@ -13,7 +13,7 @@ printUsage()
 Squash the layers of a Docker IMAGE. Overrides the original image unless -t is
 given.
 Note: If you run out of disk space ("tar: Cannot write: No space left on
-devce"), set different temp storage via \$TMPDIR.
+device"), set different temp storage via \$TMPDIR.
 Usage: "$(basename "$1")" [-from string] [-keepTemp] [-t string] [-verbose] [-clean] [-?|-h|--help] [-- DOCKER-ARGS] IMAGE
 HELPTEXT
 }
