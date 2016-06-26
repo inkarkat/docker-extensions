@@ -1,4 +1,10 @@
 #!/bin/sh
 # Source: http://blog.yohanliyanage.com/2015/05/docker-clean-up-after-yourself/
 
-exec docker run -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/docker:/var/lib/docker --rm martin/docker-cleanup-volumes
+# XXX: Switch to internal Docker repository mirror; on hLinux and Docker
+# 1.10.3-cs3, pulling from the official Docker repository fails with:
+# > Pulling repository docker.io/martin/docker-cleanup-volumes
+# > Error while pulling image: Get
+# > https://index.docker.io/v1/repositories/martin/docker-cleanup-volumes/images:
+# > x509: certificate is valid for FG3K6C3A15800008, not index.docker.io
+exec docker run "$@" -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/docker:/var/lib/docker --rm docker.hos.hpecorp.net/martin/docker-cleanup-volumes
