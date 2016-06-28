@@ -1,0 +1,4 @@
+#!/bin/bash
+# Source: http://stackoverflow.com/a/32622147/813602
+
+curl -s -S "https://registry.hub.docker.com/v2/repositories/library/${1:?}/tags/" | jq -r '."results"[]["name"]' | sort
