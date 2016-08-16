@@ -1,0 +1,8 @@
+#!/bin/bash
+
+lastArg=${!#}
+
+id=$(docker images --format "{{.ID}}" "$lastArg")
+[ "$id" ] || { echo >&2 "Warning: Could not locate $lastArg"; id=$lastArg; }
+
+printf '%s\n' "$id"
