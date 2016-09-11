@@ -1,3 +1,10 @@
-#!/bin/sh
+#!/bin/bash
 
-exec docker images "$@"
+set -o pipefail
+
+# ENH: Filter for any part of the output, not just full REPOSITORY[:TAG].
+lastArg=; [ $# -gt 0 ] && lastArg=${!#}
+case "$lastArg" in
+    -*|'')  exec docker images "$@";;
+    *)	    docker images "${@:1:$(($#-1))}" | grep -e '^REPOSITORY' -e "$lastArg";;
+esac
