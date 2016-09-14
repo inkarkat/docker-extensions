@@ -1,0 +1,35 @@
+#!/bin/bash
+
+set -o pipefail
+
+printUsage()
+{
+    cat <<HELPTEXT
+Patch a container with file(s), directories, or TAR archives.
+Usage: "$(basename "$1")" CONTAINER:DEST_PATH SRC_PATH [...] [CONTAINER:DEST_PATH SRC_PATH [...]] [-?|-h|--help]
+HELPTEXT
+}
+case "$1" in
+    --help|-h|-\?)	shift; printUsage "$0"; exit 0;;
+esac
+[ $# -ge 2 ] || { printUsage "$0"; exit 1; }
+
+target=$1; shift
+
+status=0
+for filespec
+do
+    if [[ "$filespec" =~ ^[0-9a-f]+:. ]]; then
+	target=$filespec
+	continue
+    fi
+
+    if [ -d "$filespec" ]; then
+	{ tar -C "$filespec" -cv . | docker cp - "$target"; } || status=$?
+    elif [ "${filespec##*.}" = 'tar' ]; then
+	{ tar -tf "$filespec"; cat "$filespec" | docker cp - "$target"; } || status=$?
+    else
+	printf '%s\n' "$(basename -- "$filespec")"; docker cp "$filespec" "$target" || status=$?
+    fi
+done
+exit $status
