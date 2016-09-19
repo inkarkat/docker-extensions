@@ -1,5 +1,14 @@
 #!/bin/bash
 
+if [ "$1" = '--rm' ]; then
+    isUntag=t
+    shift
+fi
+
 secondToLastArg=; [ $# -gt 1 ] && eval secondToLastArg=\${$(($#-1))}
 lastArg=; [ $# -gt 0 ] && lastArg=${!#}
-docker tag "$secondToLastArg" "$lastArg" && docker push "${@:1:$(($#-2))}" "$lastArg"
+docker tag "$secondToLastArg" "$lastArg" &&
+    docker push "${@:1:$(($#-2))}" "$lastArg" &&
+    if [ "$isUntag" ]; then
+	docker rm "$lastArg"
+    fi
