@@ -1,6 +1,6 @@
 #!/bin/sh
 
-container=$(docker-locate "${1:?}"); shift
+container=$(docker-locate -a "${1:?}"); shift
 
 finally()
 {

@@ -1,10 +1,29 @@
 #!/bin/sh
 # Source: http://blog.yohanliyanage.com/2015/05/docker-clean-up-after-yourself/
 
-# XXX: Switch to internal Docker repository mirror; on hLinux and Docker
-# 1.10.3-cs3, pulling from the official Docker repository fails with:
+exec docker run "$@" -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/docker:/var/lib/docker --rm martin/docker-cleanup-volumes
+
+# Note: On hLinux and Docker 1.10.3-cs3 (also Ubuntu 14.04.2 and Docker 1.11.2),
+# pulling from the official Docker repository fails with:
 # > Pulling repository docker.io/martin/docker-cleanup-volumes
 # > Error while pulling image: Get
 # > https://index.docker.io/v1/repositories/martin/docker-cleanup-volumes/images:
 # > x509: certificate is valid for FG3K6C3A15800008, not index.docker.io
-exec docker run "$@" -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/docker:/var/lib/docker --rm docker.hos.hpecorp.net/martin/docker-cleanup-volumes
+# This is because the proxy isn't configured for Docker; apparently, it doesn't
+# use $http_proxy, but instead needs explicit proxy configuration.
+#
+# For Ubuntu 14.04:
+# ,----[ /etc/default/docker ]----
+# | If you need Docker to use an HTTP proxy, it can also be specified here.
+# | export http_proxy="http://web-proxy.bbn.hpecorp.net:8088/"
+# `----
+# $ sudo service docker restart
+#
+# For hLinux cattleprod:
+# ,----[ /lib/systemd/system/docker.service ]----
+# | [Service]
+# | Environment="http_proxy=http://web-proxy.bbn.hpecorp.net:8088/"
+# | ExecStart=/usr/bin/docker daemon --storage-opt dm.basesize=50G -H fd://
+# `----
+# $ sudo systemctl daemon-reload
+# $ sudo service docker restart

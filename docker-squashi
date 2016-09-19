@@ -48,7 +48,7 @@ if [ ! "$isTagged" ]; then
 fi
 
 set -o pipefail
-docker save "$@" | "${SUDO:-sudo}" TMPDIR="${TMPDIR:-}" docker-squash "${allargs[@]}" | docker load
+docker save "$@" | "${SUDO:-sudo}" TMPDIR="${TMPDIR:-}" "$(type -P docker-squash)" "${allargs[@]}" | docker load
 
 beforeSize=$(docker-size "$origImage")
 afterSize=$(docker-size "$newImage")

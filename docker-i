@@ -6,5 +6,18 @@ set -o pipefail
 lastArg=; [ $# -gt 0 ] && lastArg=${!#}
 case "$lastArg" in
     -*|'')  exec docker images "$@";;
-    *)	    docker images "${@:1:$(($#-1))}" | grep -e '^REPOSITORY' -e "$lastArg";;
+    *)
+	if contains -q "$@" || contains --quiet "$@"; then
+	    # Grep full output, then extract the image ID afterwards.
+	    typeset -a args=("${@:1:$(($#-1))}")
+	    for ((i = 0; i < ${#args[@]}; i++))
+	    do
+		[ "${args[i]}" = '-q' -o "${args[i]}" = '--quiet' ] && unset args[i]
+	    done
+
+	    docker images "${args[@]}" | grep -e '^REPOSITORY' -e "$lastArg" | awk '{ print $3 }'
+	else
+	    docker images "${@:1:$(($#-1))}" | grep -e '^REPOSITORY' -e "$lastArg"
+	fi
+	;;
 esac

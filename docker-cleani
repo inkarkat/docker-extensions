@@ -1,3 +1,9 @@
 #!/bin/sh
 
-exec docker rmi $(docker images --no-trunc=true --filter dangling=true --quiet)
+images=$(docker images --no-trunc=true --filter dangling=true --quiet)
+if [ ! "$images" ]; then
+    echo >&2 "No dangling images found."
+    exit 1
+fi
+
+exec docker rmi $images
