@@ -1,4 +1,0 @@
-#!/bin/bash
-
-lastArg=; [ $# -gt 0 ] && lastArg=${!#}
-exec docker pull "${@:1:$(($#-1))}" "hub.docker.hpecorp.net/$lastArg"

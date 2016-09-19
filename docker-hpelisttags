@@ -1,6 +1,0 @@
-#!/bin/bash
-
-set -o pipefail
-readonly auth=$(jq -r '.auths."hub.docker.hpecorp.net".auth' ~/.docker/config.json | base64 --decode)
-curl --silent -L -u "$auth" https://api.hub.docker.hpecorp.net/v2/${1:?}/tags/list | \
-    jq -r '.tags | join("\n")'
