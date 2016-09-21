@@ -1,4 +1,0 @@
-#!/bin/bash
-
-lastArg=; [ $# -gt 0 ] && lastArg=${!#}
-exec docker tag "${@:1:$(($#-1))}" "${DOCKER_LOCAL_REPOSITORY:?}/$lastArg"
