@@ -1,0 +1,51 @@
+#!/bin/bash
+
+printUsage()
+{
+    cat <<HELPTEXT
+Patch an image with Dockerfile instructions read from stdin.
+Usage: echo 'CMD ["sleep", "infinity"]' | "$(basename "$1")" [-o|--overwrite|-t|--tag NAME] BASE_IMAGE [-?|-h|--help]
+HELPTEXT
+}
+
+case "$1" in
+    --help|-h|-\?)	shift; printUsage "$0"; exit 0;;
+esac
+isOverwrite=
+tag=
+typeset -a allargs=()
+while [ $# -gt 1 ]
+do
+    case "$1" in
+	--help|-h|-\?)	shift; printUsage "$0"; exit 0;;
+	--overwrite|-o)	shift
+			isOverwrite=t
+			if [ "$tag" ]; then echo >&2 "ERROR: Cannot both overwrite and tag"; exit 2; fi
+			;;
+	--tag|-t)	allargs+=("$1")
+			shift
+			if [ "$isOverwrite" ]; then echo >&2 "ERROR: Cannot both overwrite and tag"; exit 2; fi
+			;;
+	--)		shift; break;;
+	*)		allargs+=("$1")
+			shift
+			;;
+    esac
+done
+[ $# -eq 1 ] || { printUsage "$0"; exit 2; }
+baseImage=$1
+if [ "$isOverwrite" ]; then
+    allargs+=(--tag "$baseImage")
+fi
+
+TMPDIR=$(mktemp --directory --tmpdir "$(basename -- "$0")-XXXXXX" 2>/dev/null || echo "${TEMP:-/tmp}/$(basename -- "$0").$$")
+cleanup()
+{
+    rm -rf "$TMPDIR" 2>/dev/null
+}
+[ "$DEBUG" ] || trap 'cleanup' EXIT
+
+printf "FROM %s\n" "$baseImage" > "${TMPDIR}/Dockerfile"
+cat >> "${TMPDIR}/Dockerfile"
+
+docker build "${allargs[@]}" "$TMPDIR"
