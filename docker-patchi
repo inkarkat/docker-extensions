@@ -46,6 +46,12 @@ cleanup()
 [ "$DEBUG" ] || trap 'cleanup' EXIT
 
 printf "FROM %s\n" "$baseImage" > "${TMPDIR}/Dockerfile"
-cat >> "${TMPDIR}/Dockerfile"
+
+# Read in the Docker build instructions from stdin. Any referenced files (ADD)
+# must be copied into the temporary build root.
+sed >> "${TMPDIR}/Dockerfile" \
+    -e "/^ADD /{ h; s/^ADD/cp/; s#[^ ]*\$#${TMPDIR}/#" \
+    -e e \
+    -e 'g; s#^ADD [^ ]*/\([^ /]\+\)#ADD \1#}'
 
 docker build "${allargs[@]}" "$TMPDIR"
