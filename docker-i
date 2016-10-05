@@ -2,6 +2,17 @@
 
 set -o pipefail
 
+contains()
+{
+    needle=$1
+    shift
+    for elem
+    do
+	[ "$needle" = "$elem" ] && return 0
+    done
+    return 1
+}
+
 # ENH: Filter for any part of the output, not just full REPOSITORY[:TAG].
 lastArg=; [ $# -gt 0 ] && lastArg=${!#}
 case "$lastArg" in
