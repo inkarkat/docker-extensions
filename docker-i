@@ -13,10 +13,15 @@ contains()
     return 1
 }
 
+outputFilter()
+{
+    sed -e 's#^\([^ \t]\+\)[ \t]\([ \t]\+\)\([^ \t]\+\)#\1:\3\2#'
+}
+
 # ENH: Filter for any part of the output, not just full REPOSITORY[:TAG].
 lastArg=; [ $# -gt 0 ] && lastArg=${!#}
 case "$lastArg" in
-    -*|'')  exec docker images "$@";;
+    -*|'')  exec docker images "$@" | outputFilter;;
     *)
 	if contains -q "$@" || contains --quiet "$@"; then
 	    # Grep full output, then extract the image ID afterwards.
@@ -28,7 +33,7 @@ case "$lastArg" in
 
 	    docker images "${args[@]}" | grep -e '^REPOSITORY' -e "$lastArg" | awk '{ print $3 }'
 	else
-	    docker images "${@:1:$(($#-1))}" | grep -e '^REPOSITORY' -e "$lastArg"
+	    docker images "${@:1:$(($#-1))}" | grep -e '^REPOSITORY' -e "$lastArg" | outputFilter
 	fi
 	;;
 esac
