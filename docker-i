@@ -31,9 +31,9 @@ case "$lastArg" in
 		[ "${args[i]}" = '-q' -o "${args[i]}" = '--quiet' ] && unset args[i]
 	    done
 
-	    docker images "${args[@]}" | grep -e '^REPOSITORY' -e "$lastArg" | awk '{ print $3 }'
+	    docker images "${args[@]}" | outputFilter | grep -e "$lastArg" | awk '{ print $2 }'
 	else
-	    docker images "${@:1:$(($#-1))}" | grep -e '^REPOSITORY' -e "$lastArg" | outputFilter
+	    docker images "${@:1:$(($#-1))}" | outputFilter | grep -e '^REPOSITORY' -e "$lastArg"
 	fi
 	;;
 esac
