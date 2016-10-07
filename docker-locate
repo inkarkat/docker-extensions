@@ -4,16 +4,18 @@ printUsage()
 {
     cat <<HELPTEXT
 Locate docker container ID based on its name or another identifier.
-Usage: "$(basename "$1")" [-e|--error] [-a|--all] [-l|--latest] [-n=-1] CONTAINER_NAME [-?|-h|--help]
+Usage: "$(basename "$1")" [-e|--error] [-u|--unique] [-a|--all] [-l|--latest] [-n=-1] CONTAINER_NAME [-?|-h|--help]
 HELPTEXT
 }
 
 isError=
+isUnique=
 while [ $# -ne 0 ]
 do
     case "$1" in
 	--help|-h|-\?)	shift; printUsage "$0"; exit 0;;
 	--error|-e)	shift; isError=t;;
+	--unique|-u)	shift; isUnique="$1";;
 	*)		break;;
     esac
 done
@@ -31,7 +33,6 @@ if [ ${#id[@]} -eq 0 ]; then
 	id=("$lastArg")
     fi
 elif [ ${#id[@]} -gt 1 ]; then
-    set -x
     # Try to find exact match with image name.
     typeset -a fullMatches=()
     typeset -a nameVersionMatches=()
@@ -59,6 +60,15 @@ elif [ ${#id[@]} -gt 1 ]; then
     elif [ ${#nameMatches[@]} -eq 1 ]; then
 	id=("${nameMatches[0]}")
     fi
+fi
+
+if [ "$isUnique" -a ${#id[@]} -gt 1 ]; then
+    echo >&2 "ERROR: Multiple containers found:"
+    for i in "${id[@]}"
+    do
+	docker inspect --format '{{printf "%.12s" .ID}} {{.Config.Image}}' "$i" >&2
+    done
+    exit 1
 fi
 
 printf '%s\n' "${id[@]}"
