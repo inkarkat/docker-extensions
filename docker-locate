@@ -30,6 +30,35 @@ if [ ${#id[@]} -eq 0 ]; then
 	echo >&2 "Warning: Could not locate $lastArg"
 	id=("$lastArg")
     fi
+elif [ ${#id[@]} -gt 1 ]; then
+    set -x
+    # Try to find exact match with image name.
+    typeset -a fullMatches=()
+    typeset -a nameVersionMatches=()
+    typeset -a packageNameMatches=()
+    typeset -a nameMatches=()
+    for i in "${id[@]}"
+    do
+	imageFull="$(docker inspect --format '{{.Config.Image}}' "$i")"
+	nameVersion=${imageFull##*/}
+	packageName=${imageFull%:*}
+	name=${nameVersion%:*}
+
+	[ "$lastArg" = "$imageFull" ] && fullMatches+=$i
+	[ "$lastArg" = "$nameVersion" ] && nameVersionMatches+=$i
+	[ "$lastArg" = "$packageName" ] && packageNameMatches+=$i
+	[ "$lastArg" = "$name" ] && nameMatches+=$i
+    done
+
+    if [ ${#fullMatches[@]} -eq 1 ]; then
+	id=("${fullMatches[0]}")
+    elif [ ${#nameVersionMatches[@]} -eq 1 ]; then
+	id=("${nameVersionMatches[0]}")
+    elif [ ${#packageNameMatches[@]} -eq 1 ]; then
+	id=("${packageNameMatches[0]}")
+    elif [ ${#nameMatches[@]} -eq 1 ]; then
+	id=("${nameMatches[0]}")
+    fi
 fi
 
 printf '%s\n' "${id[@]}"
