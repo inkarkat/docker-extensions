@@ -2,9 +2,10 @@
 
 lastArg=${!#}
 
-id=$(docker ps -q "${@:1:$(($#-1))}" --filter "id=$lastArg")
-[ "$id" ] || id=$(docker ps -q "${@:1:$(($#-1))}" --filter "name=$lastArg")
-[ "$id" ] || id=$(docker ps -q "${@:1:$(($#-1))}" --filter "ancestor=$lastArg")
-[ "$id" ] || { echo >&2 "Warning: Could not locate $lastArg"; id=$lastArg; }
+IFS=$'\n'
+typeset -a id=($(docker ps -q "${@:1:$(($#-1))}" --filter "id=$lastArg"))
+[ ${#id[@]} -eq 0 ] && id=($(docker ps -q "${@:1:$(($#-1))}" --filter "name=$lastArg"))
+[ ${#id[@]} -eq 0 ] && id=($(docker ps -q "${@:1:$(($#-1))}" --filter "ancestor=$lastArg"))
+[ ${#id[@]} -eq 0 ] && { echo >&2 "Warning: Could not locate $lastArg"; id=("$lastArg"); }
 
-printf '%s\n' "$id"
+printf '%s\n' "${id[@]}"
