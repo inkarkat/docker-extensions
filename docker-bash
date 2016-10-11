@@ -1,18 +1,9 @@
 #!/bin/bash
 
-dockerArguments=
-if [ "$1" = '--rm' ]; then
-    dockerArguments=$1
-    shift
-fi
-
 if container=$(docker-locate --error --unique "${1:?}"); then
     shift
     exec docker exec -it "$container" bash "$@"
-elif image=$(docker-locate-image "${1:?}"); then
-    shift
-    exec docker run $dockerArguments -it "$image" bash "$@"
 else
-    echo >&2 "ERROR: No such image or container: $1"
+    echo >&2 "ERROR: No such container: $1"
     exit 1
 fi
