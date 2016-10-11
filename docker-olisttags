@@ -1,6 +1,9 @@
 #!/bin/bash
 
+repoHost=${DOCKER_ORIGIN_REPOSITORY%%/*}
+repoPath=/${DOCKER_ORIGIN_REPOSITORY#*/}
+
 set -o pipefail
-readonly auth=$(jq -r '.auths."${DOCKER_ORIGIN_REPOSITORY:?}".auth' ~/.docker/config.json | base64 --decode)
-curl --silent -L -u "$auth" https://api.${DOCKER_ORIGIN_REPOSITORY:?}/v2/${1:?}/tags/list | \
+readonly auth=$(jq -r '.auths."${repoHost}".auth' ~/.docker/config.json | base64 --decode)
+curl --silent -L -u "$auth" https://api.${repoHost}/v2${repoPath}/${1:?}/tags/list | \
     jq -r '.tags | join("\n")'
