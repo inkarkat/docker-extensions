@@ -1,3 +1,19 @@
 #!/bin/sh
 
-exec docker ps --format 'table {{.ID}} ({{.Status}})\t{{.Image}}' "$@"
+contains()
+{
+    needle=$1
+    shift
+    for elem
+    do
+	[ "$needle" = "$elem" ] && return 0
+    done
+    return 1
+}
+
+if contains -q "$@" || contains --quiet "$@"; then
+    # --format takes precedence over --quiet.
+    exec docker ps "$@"
+else
+    exec docker ps --format 'table {{.ID}} ({{.Status}})\t{{.Image}}' "$@"
+fi
