@@ -15,14 +15,14 @@ exec docker run "$@" -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/do
 # For Ubuntu 14.04:
 # ,----[ /etc/default/docker ]----
 # | If you need Docker to use an HTTP proxy, it can also be specified here.
-# | export http_proxy="http://web-proxy.bbn.hpecorp.net:8088/"
+# | export http_proxy="http://web-proxy:8088/"
 # `----
 # $ sudo service docker restart
 #
 # For hLinux cattleprod:
 # ,----[ /lib/systemd/system/docker.service ]----
 # | [Service]
-# | Environment="http_proxy=http://web-proxy.bbn.hpecorp.net:8088/"
+# | Environment="http_proxy=http://web-proxy:8088/"
 # | ExecStart=/usr/bin/docker daemon --storage-opt dm.basesize=50G -H fd://
 # `----
 # $ sudo systemctl daemon-reload
