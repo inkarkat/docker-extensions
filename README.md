@@ -2,7 +2,11 @@
 
 These are some personal aliases, shortcuts, and extensions that make (my) work with the [docker containerization command-line interface](https://www.docker.com/) easier and faster. Some of them may be specific to my environment and workflow, but maybe someone finds a valuable nugget in there.
 
-Use the following (Bash) shell function to invoke the extensions in the same way as the built-in docker commands, via `docker SUBCOMMAND`:
+### Installation
+
+Download all / some selected extensions (note that some have dependencies, though) and put them somewhere in your `PATH`. You can then invoke them via `docker-SUBCOMMAND`.
+
+Optionally, use the following (Bash) shell function (e.g. in your `.bashrc`) to transparently invoke the extensions in the same way as the built-in docker commands, via `docker SUBCOMMAND`:
 
     docker() {
         typeset -r dockerAlias="docker-$1"
@@ -10,8 +14,8 @@ Use the following (Bash) shell function to invoke the extensions in the same way
             docker ${DOCKER_DEFAULT_COMMAND:-ps}
         elif type -t "$dockerAlias" >/dev/null; then
             shift
-            "$dockerAlias" "$@"
+            eval $dockerAlias '"$@"'
         else
-            "$(which docker)" "$@"
+            command docker "$@"
         fi
     }
