@@ -1,0 +1,43 @@
+#!/bin/bash
+
+printUsage()
+{
+    cat <<HELPTEXT
+Obtain the virtual network interface [for POD names matching POD-EXPR].
+HELPTEXT
+    printf 'Usage: %q %s\n' "$(basename "$1")" '[--] [POD-EXPR] [-?|-h|--help]'
+}
+
+allNetworks=$(ip addr | grep '^[0-9]\+:') || exit $?
+queryNetwork()
+{
+    local pid=${1:?}; shift
+
+    local podInterfaceNr
+    if ! podInterfaceNr=$(nsenter -t "$pid" -n ip addr | sed -n -e 's#^\([0-9]\+\): \+[^ ]\+@if[0-9]\+:.*$#\1#p'); then
+	printf >&2 'ERROR: Cannot determine interface for PID %d!\n' "$pid"
+	return 1
+    fi
+    if ! [[ "$podInterfaceNr" =~ ^[0-9]+$ ]]; then
+	printf >&2 'ERROR: Invalid or too many interfaces for PID %d!\n' "$pid"
+	return 1
+    fi
+
+    if ! printf '%s' "$allNetworks" | sed -n -e 's#^[0-9]\+: \+\([^ ]\+\)@if'"$podInterfaceNr"':.*$#\1#p'; then
+	printf >&2 'ERROR: Cannot find interface for PID %d that corresponds to number %d!\n' "$pid" "$podInterfaceNr"
+	return 1
+    fi
+}
+
+status=0
+while IFS=$'\t' read -r podName podPid
+do
+    if ! podNetwork=$(queryNetwork "$podPid"); then
+	status=$?
+	continue
+    fi
+
+    printf '%s\t%s\n' "$podName" "$podNetwork"
+done < <(docker-pod-pids --no-shorten "$@")
+
+exit $status
