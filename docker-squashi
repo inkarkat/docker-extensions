@@ -38,7 +38,7 @@ do
 	*)			break;;
     esac
 done
-[ $# -ge 1 ] || { printUsage "$0"; exit 2; }
+[ $# -ge 1 ] || { printUsage "$0" >&2; exit 2; }
 origImage="${!#}"
 if [ ! "$isTagged" ]; then
     tempImage=${origImage%%:*}
