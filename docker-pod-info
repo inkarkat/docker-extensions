@@ -7,18 +7,20 @@ Obtain the passed DOCKER-FORMAT / POD name if empty [for PODs whose names match
 POD-EXPR] for the Kubernetes "pause" container that represents the POD itself /
 for containers matching CONTAINTER-EXPR.
 HELPTEXT
-    printf 'Usage: %q %s\n' "$(basename "$1")" 'DOCKER-FORMAT [-c|--container CONTAINER-EXPR] [--] [POD-EXPR] [-?|-h|--help]'
+    printf 'Usage: %q %s\n' "$(basename "$1")" 'DOCKER-FORMAT [--no-shorten] [-c|--container CONTAINER-EXPR] [--] [POD-EXPR] [-?|-h|--help]'
 }
 
 queryItem=${1?}; shift
 
 containerExpr='k8s\.gcr\.io/pause'
 podFilterExpr=
+isShorten=t
 typeset -a dockerArgs=()
 while [ $# -ne 0 ]
 do
     case "$1" in
 	--help|-h|-\?)	shift; printUsage "$0"; exit 0;;
+	--no-shorten)	shift; isShorten=;;
 	--container|-c)	shift; containerExpr="$1"; shift;;
 	--)		shift; break;;
 	*)		dockerArgs+=("$1")
@@ -42,12 +44,16 @@ podInfo()
 }
 
 if [ "$podFilterExpr" ]; then
-    # Omit POD name prefix if there's only a single matching POD and it exactly
-    # matches the passed EXPR.
-    literalPodFilterExpr=$(printf %s "$podFilterExpr" | sed -e 's/[][\$*.^#]/\\&/g')
-    singleResultFilter=(sed -e '1!b' -e "\$s#^${literalPodFilterExpr}\\t##")
+    if [ "$isShorten" ]; then
+	# Omit POD name prefix if there's only a single matching POD and it exactly
+	# matches the passed EXPR.
+	literalPodFilterExpr=$(printf %s "$podFilterExpr" | sed -e 's/[][\$*.^#]/\\&/g')
+	singleResultFilter=(sed -e '1!b' -e "\$s#^${literalPodFilterExpr}\\t##")
 
-    podInfo "$@" | grep "$podFilterExpr" | "${singleResultFilter[@]}"
+	podInfo "$@" | grep "$podFilterExpr" | "${singleResultFilter[@]}"
+    else
+	podInfo "$@" | grep "$podFilterExpr"
+    fi
 else
     podInfo "$@"
 fi
