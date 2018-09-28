@@ -1,0 +1,53 @@
+#!/bin/bash
+
+printUsage()
+{
+    cat <<HELPTEXT
+Obtain the passed DOCKER-FORMAT / POD name if empty [for PODs whose names match
+POD-EXPR] for the Kubernetes "pause" container that represents the POD itself /
+for containers matching CONTAINTER-EXPR.
+HELPTEXT
+    printf 'Usage: %q %s\n' "$(basename "$1")" 'DOCKER-FORMAT [-c|--container CONTAINER-EXPR] [--] [POD-EXPR] [-?|-h|--help]'
+}
+
+queryItem=${1?}; shift
+
+containerExpr='k8s\.gcr\.io/pause'
+podFilterExpr=
+typeset -a dockerArgs=()
+while [ $# -ne 0 ]
+do
+    case "$1" in
+	--help|-h|-\?)	shift; printUsage "$0"; exit 0;;
+	--container|-c)	shift; containerExpr="$1"; shift;;
+	--)		shift; break;;
+	*)		dockerArgs+=("$1")
+			shift
+			;;
+    esac
+done
+case $# in
+    0)	;;
+    1)	podFilterExpr=$1;;
+    *)	printUsage "$0" >&2; exit 2;;
+esac
+
+
+podInfo()
+{
+    typeset -a containerIds=($(docker-psg --no-trunc "${dockerArgs[@]}" -- "$containerExpr" | awk '{ print $1 }'))
+    [ ${#containerIds[@]} -eq 0 ] && exit 1
+
+    docker inspect "${dockerArgs[@]}" --format '{{index .Config.Labels "io.kubernetes.pod.name"}}'"${queryItem:+{{\"\\t\"\}\}}${queryItem}" "${containerIds[@]}"
+}
+
+if [ "$podFilterExpr" ]; then
+    # Omit POD name prefix if there's only a single matching POD and it exactly
+    # matches the passed EXPR.
+    literalPodFilterExpr=$(printf %s "$podFilterExpr" | sed -e 's/[][\$*.^#]/\\&/g')
+    singleResultFilter=(sed -e '1!b' -e "\$s#^${literalPodFilterExpr}\\t##")
+
+    podInfo "$@" | grep "$podFilterExpr" | "${singleResultFilter[@]}"
+else
+    podInfo "$@"
+fi

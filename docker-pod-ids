@@ -1,0 +1,13 @@
+#!/bin/bash
+
+printUsage()
+{
+    cat <<HELPTEXT
+Obtain the Kubernetes POD name [for POD names matching POD-EXPR] and container
+ID for the Kubernetes "pause" container that represents the POD itself / for
+containers matching CONTAINTER-EXPR.
+HELPTEXT
+    printf 'Usage: %q %s\n' "$(basename "$1")" 'DOCKER-FORMAT [-c|--container CONTAINER-EXPR] [--] [POD-EXPR] [-?|-h|--help]'
+}
+
+exec docker-pod-info '{{.ID}}' "$@"
