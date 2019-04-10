@@ -4,8 +4,8 @@ printUsage()
 {
     cat <<HELPTEXT
 Locate docker container ID based on its name or another identifier.
-Usage: "$(basename "$1")" [-e|--error] [-u|--unique] [-a|--all] [-l|--latest] [-n=-1] CONTAINER_NAME [-?|-h|--help]
 HELPTEXT
+    printf 'Usage: %q %s\n' "$(basename "$1")" '[-e|--error] [-u|--unique] [-a|--all] [-l|--latest] [-n=-1] CONTAINER_NAME [-?|-h|--help]'
 }
 
 isError=

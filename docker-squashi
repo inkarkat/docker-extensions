@@ -1,5 +1,4 @@
 #!/bin/bash
-
 set -eu
 
 if ! type -t docker-squash >/dev/null; then
@@ -14,8 +13,8 @@ Squash the layers of a Docker IMAGE. Overrides the original image unless -t is
 given.
 Note: If you run out of disk space ("tar: Cannot write: No space left on
 device"), set different temp storage via \$TMPDIR.
-Usage: "$(basename "$1")" [-from string] [-keepTemp] [-t string] [-verbose] [-clean] [-?|-h|--help] [-- DOCKER-ARGS] IMAGE
 HELPTEXT
+    printf 'Usage: %q %s\n' "$(basename "$1")" '[-from string] [-keepTemp] [-t string] [-verbose] [-clean] [-?|-h|--help] [-- DOCKER-ARGS] IMAGE'
 }
 
 type -t humanunits >/dev/null || humanunits()
