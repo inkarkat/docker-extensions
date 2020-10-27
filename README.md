@@ -1,5 +1,7 @@
 # Docker CLI extensions
 
+_Additions and tweaks to the Docker CLI._
+
 These are some personal aliases, shortcuts, and extensions that make (my) work with the [docker containerization command-line interface](https://www.docker.com/) easier and faster. Some of them may be specific to my environment and workflow, but maybe someone finds a valuable nugget in there.
 
 ### Installation
