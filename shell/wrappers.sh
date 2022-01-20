@@ -9,7 +9,7 @@ docker()
 	docker ${DOCKER_DEFAULT_COMMAND:-ps}
     elif type ${BASH_VERSION:+-t} "$dockerAlias" >/dev/null 2>&1; then
 	shift
-	eval $dockerAlias '"$@"'
+	$dockerAlias "$@"
     else
 	command docker "$@"
     fi
