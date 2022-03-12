@@ -44,17 +44,12 @@ podInfo()
     docker inspect "${dockerArgs[@]}" --format '{{index .Config.Labels "io.kubernetes.pod.name"}}'"${queryItem:+{{\"\\t\"\}\}}${queryItem}" "${containerIds[@]}"
 }
 
-if [ -n "$podFilterExpr" ]; then
-    if [ "$isShorten" ]; then
-	# Omit POD name prefix if there's only a single matching POD and it exactly
-	# matches the passed EXPR.
-	literalPodFilterExpr="$(printf %s "$podFilterExpr" | sed -e 's/[][\$*.^#]/\\&/g')"
-	typeset -a singleResultFilter=(sed -e '1!b' -e "\$s#^${literalPodFilterExpr}\\t##")
-
-	podInfo "$@" | grep "$podFilterExpr" | "${singleResultFilter[@]}"
-    else
-	podInfo "$@" | grep "$podFilterExpr"
-    fi
-else
-    podInfo "$@"
+typeset -a singleResultFilter=()
+if [ -n "$podFilterExpr" ]  && [ "$isShorten" ]; then
+    # Omit POD name prefix if there's only a single matching POD and it exactly
+    # matches the passed EXPR.
+    literalPodFilterExpr="$(printf %s "$podFilterExpr" | sed -e 's/[][\$*.^#]/\\&/g')"
+    singleResultFilter=(sed -e '1!b' -e "\$s#^${literalPodFilterExpr}\\t##")
 fi
+
+eval 'podInfo "$@"' "${podFilterExpr:+| grep \"\$podFilterExpr\"}" "${singleResultFilter:+|}" '"${singleResultFilter[@]}"'
