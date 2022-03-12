@@ -22,9 +22,9 @@ done
 lastArg=${!#}
 
 IFS=$'\n'
-typeset -a id=($(docker ps -q "${@:1:$(($#-1))}" --filter "id=$lastArg"))
-[ ${#id[@]} -eq 0 ] && id=($(docker ps -q "${@:1:$(($#-1))}" --filter "name=$lastArg"))
-[ ${#id[@]} -eq 0 ] && id=($(docker ps -q "${@:1:$(($#-1))}" --filter "ancestor=$lastArg"))
+readarray -t id < <(docker ps -q "${@:1:$(($#-1))}" --filter "id=$lastArg")
+[ ${#id[@]} -eq 0 ] && readarray -t id < <(docker ps -q "${@:1:$(($#-1))}" --filter "name=$lastArg")
+[ ${#id[@]} -eq 0 ] && readarray -t id < <(docker ps -q "${@:1:$(($#-1))}" --filter "ancestor=$lastArg")
 if [ ${#id[@]} -eq 0 ]; then
     if [ "$isError" ]; then
 	exit 1

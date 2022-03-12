@@ -30,25 +30,26 @@ do
 done
 case $# in
     0)	;;
-    1)	podFilterExpr=$1;;
+    1)	podFilterExpr="$1";;
     *)	printUsage "$0" >&2; exit 2;;
 esac
 
 
 podInfo()
 {
-    typeset -a containerIds=($(docker-psg --no-trunc "${dockerArgs[@]}" -- "$containerExpr" | awk '{ print $1 }'))
+    typeset -a containerIds=()
+    readarray -t containerIds < <(docker-psg --no-trunc "${dockerArgs[@]}" -- "$containerExpr" | awk '{ print $1 }')
     [ ${#containerIds[@]} -eq 0 ] && exit 1
 
     docker inspect "${dockerArgs[@]}" --format '{{index .Config.Labels "io.kubernetes.pod.name"}}'"${queryItem:+{{\"\\t\"\}\}}${queryItem}" "${containerIds[@]}"
 }
 
-if [ "$podFilterExpr" ]; then
+if [ -n "$podFilterExpr" ]; then
     if [ "$isShorten" ]; then
 	# Omit POD name prefix if there's only a single matching POD and it exactly
 	# matches the passed EXPR.
-	literalPodFilterExpr=$(printf %s "$podFilterExpr" | sed -e 's/[][\$*.^#]/\\&/g')
-	singleResultFilter=(sed -e '1!b' -e "\$s#^${literalPodFilterExpr}\\t##")
+	literalPodFilterExpr="$(printf %s "$podFilterExpr" | sed -e 's/[][\$*.^#]/\\&/g')"
+	typeset -a singleResultFilter=(sed -e '1!b' -e "\$s#^${literalPodFilterExpr}\\t##")
 
 	podInfo "$@" | grep "$podFilterExpr" | "${singleResultFilter[@]}"
     else
