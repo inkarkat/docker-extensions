@@ -1,0 +1,40 @@
+#!/bin/bash
+
+: ${DOCKER_SINGLE_CONTAINER_MARKER='{}'}
+containerMarker="$DOCKER_SINGLE_CONTAINER_MARKER"; unset DOCKER_SINGLE_CONTAINER_MARKER
+
+printUsage()
+{
+    cat <<HELPTEXT
+Execute DOCKER-COMMAND with the ID of the single running Docker container
+(${containerMarker:+either }appended to${containerMarker:+ or replacing any $containerMarker marker inside} SIMPLECOMMAND).
+HELPTEXT
+    echo
+    printf 'Usage: %q %s\n' "$(basename "$1")" '[--] DOCKER-COMMAND [...] [-?|-h|--help]'
+    echo
+    cat <<HELPTEXT
+Succeed if a single Docker container is running.
+HELPTEXT
+    echo
+    printf 'Usage: %q\n' "$(basename "$1")"
+}
+
+while [ $# -ne 0 ]
+do
+    case "$1" in
+	--help|-h|-\?)	shift; printUsage "$0"; exit 0;;
+	--)		shift; break;;
+	-*)		{ echo "ERROR: Unknown option \"$1\"!"; echo; printUsage "$0"; } >&2; exit 2;;
+	*)		break;;
+    esac
+done
+readarray -t containerIds < <(docker-ps --quiet)
+[ ${#containerIds[@]} -eq 1 ] || exit 1
+[ $# -gt 0 ] || exit 0
+id="${containerIds[0]}"
+
+typeset -a commands=("$@")
+typeset -a i=("$id")
+typeset -a interpolatedCommands=("${commands[@]//"$containerMarker"/$id}")
+[ "${interpolatedCommands[*]}" = "${commands[*]}" ] || i=()
+exec docker-wrapper "${interpolatedCommands[@]}" "${i[@]}"
