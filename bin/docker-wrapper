@@ -1,0 +1,46 @@
+#!/bin/bash
+set -o pipefail
+shopt -qs extglob
+
+# Allow definition of Docker aliases by putting an executable "docker-foo"
+# somewhere in the PATH. Add paging when outputting to the terminal, as docker
+# output can be long, and the command (nor my extensions) doesn't do that on its
+# own.
+
+typeset -a pager=("${PAGER:-less}" --RAW-CONTROL-CHARS); [ -t 1 ] || pager=()
+[ -n "$_docker_wrapper" ] && pager=()
+export _docker_wrapper=true
+
+typeset -a dockerArgs=()
+while [ $# -ne 0 ]
+do
+    case "$1" in
+	--debug|-D|--tls|--tlsverify)
+			dockerArgs+=("$1"); shift;;
+	--config|--context|-c|--host|-H|-log-level|-l|--tlscacert|--tlscert)
+			dockerArgs+=("$1" "$2"); shift; shift;;
+	--)		break;;
+	*)		break;;
+    esac
+done
+
+pagerDisableCheck()
+{
+    containsGlob '?(filtered)logs' "$@" && contains -f "$@" && pager=()  # Paging would interfere with log following; turn it off.
+}
+
+typeset dockerAlias="docker-$1"
+if [ ${#dockerArgs[@]} -eq 0 -a $# -eq 0 ]; then
+    eval 'command docker ${DOCKER_DEFAULT_COMMAND:-ps}' "${pager:+|}" '"${pager[@]}"'
+elif type -t "$dockerAlias" >/dev/null; then
+    shift
+    [[ "$dockerAlias" = docker-bash?(i) ]] && pager=()	# Paging would interfere with the interactive REPL; turn it off.
+    [[ "$dockerAlias" = docker-?(filtered)logs ]] && contains -f "$@" && pager=()  # Paging would interfere with log following; turn it off.
+    pagerDisableCheck "$@"
+
+    eval $dockerAlias '"${dockerArgs[@]}" "$@"' "${pager:+|}" '"${pager[@]}"'
+else
+    pagerDisableCheck "$@"
+
+    eval 'command docker "${dockerArgs[@]}" "$@"' "${pager:+|}" '"${pager[@]}"'
+fi
