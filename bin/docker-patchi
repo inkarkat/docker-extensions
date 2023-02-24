@@ -38,20 +38,20 @@ if [ "$isOverwrite" ]; then
     allargs+=(--tag "$baseImage")
 fi
 
-TMPDIR="$(mktemp --directory --tmpdir "$(basename -- "$0")-XXXXXX" 2>/dev/null || { dirspec="${TEMP:-/tmp}/$(basename -- "$0").$$$RANDOM"; mkdir -p -- "$dirspec" && printf %s "$dirspec"; })" || exit $?
+tempDirspec="$(mktemp --directory --tmpdir "$(basename -- "$0")-XXXXXX" 2>/dev/null || { dirspec="${TMPDIR:-/tmp}/$(basename -- "$0").$$$RANDOM"; mkdir -p -- "$dirspec" && printf %s "$dirspec"; })" || exit $?
 cleanup()
 {
-    rm -rf "$TMPDIR" 2>/dev/null
+    rm -rf "$tempDirspec" 2>/dev/null
 }
 [ "$DEBUG" ] || trap 'cleanup' EXIT
 
-printf "FROM %s\n" "$baseImage" > "${TMPDIR}/Dockerfile"
+printf "FROM %s\n" "$baseImage" > "${tempDirspec}/Dockerfile"
 
 # Read in the Docker build instructions from stdin. Any referenced files (ADD)
 # must be copied into the temporary build root.
-sed >> "${TMPDIR}/Dockerfile" \
-    -e "/^ADD /{ h; s/^ADD/cp/; s#[^ ]*\$#${TMPDIR}/#" \
+sed >> "${tempDirspec}/Dockerfile" \
+    -e "/^ADD /{ h; s/^ADD/cp/; s#[^ ]*\$#${tempDirspec}/#" \
     -e e \
     -e 'g; s#^ADD [^ ]*/\([^ /]\+\)#ADD \1#}'
 
-docker build "${allargs[@]}" "$TMPDIR"
+docker build "${allargs[@]}" "$tempDirspec"
