@@ -7,8 +7,12 @@ shopt -qs extglob
 # output can be long, and the command (nor my extensions) doesn't do that on its
 # own.
 
-typeset -a pager=("${PAGER:-less}" --RAW-CONTROL-CHARS); [ -t 1 ] || pager=()
-[ -n "$_docker_wrapper" ] && pager=()
+if [ -z "${_docker_toterm+t}" ]; then
+    _docker_toterm=; [ -t 1 ] && _docker_toterm=true
+    export _docker_toterm
+fi
+typeset -a pager=("${PAGER:-less}" --RAW-CONTROL-CHARS); [ "$_docker_toterm" ] || pager=()
+[ -n "${_docker_wrapper+t}" ] && pager=()
 export _docker_wrapper=true
 
 typeset -a dockerArgs=()
