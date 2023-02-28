@@ -15,5 +15,12 @@ if contains -q "$@" || contains --quiet "$@"; then
     # --format takes precedence over --quiet.
     exec docker ps "$@"
 else
-    exec docker ps --format 'table {{.ID}} ({{.Status}})\t{{.Image}}' "$@"
+    if [ -t 1 -o "$_docker_toterm" ]; then
+	exec docker ps --format 'table {{.ID}} ({{.Status}})\t{{.Image}}' "$@"
+    else
+	# DWIM: When piped into another command or captured, just print the
+	# identifier, so (assuming only one running container) that it can
+	# be combined with other commands: $ docker exec $(docker ps) -- uname
+	exec docker ps --format 'table {{.ID}}' "$@"
+    fi
 fi
