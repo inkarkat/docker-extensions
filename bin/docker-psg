@@ -41,9 +41,9 @@ psg()
 {
     local lastArg="${!#}"
     if [ $# -gt 0 -a "$lastArg" != -- ]; then
-	docker-ps "${@:1:$(($#-1))}" | grep "$lastArg"
+	docker-ps --unpiped "${@:1:$(($#-1))}" | grep "$lastArg"
     else
-	docker-ps --latest
+	docker-ps --unpiped --latest
     fi
 }
 eval 'psg "$@"' "${filter:+|}$filter"
