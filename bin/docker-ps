@@ -19,8 +19,9 @@ else
 	exec docker ps --format 'table {{.ID}} ({{.Status}})\t{{.Image}}' "$@"
     else
 	# DWIM: When piped into another command or captured, just print the
-	# identifier, so (assuming only one running container) that it can
-	# be combined with other commands: $ docker exec $(docker ps) -- uname
-	exec docker ps --format 'table {{.ID}}' "$@"
+	# identifier (--quiet does that along with suppressing the header), so
+	# (assuming only one running container) that it can be combined with
+	# other commands: $ docker exec $(docker ps) -- uname
+	exec docker ps --quiet "$@"
     fi
 fi
