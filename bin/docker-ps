@@ -1,27 +1,40 @@
-#!/bin/sh
+#!/bin/bash
 
-contains()
+printUsage()
 {
-    needle=$1
-    shift
-    for elem
-    do
-	[ "$needle" = "$elem" ] && return 0
-    done
-    return 1
+    cat <<HELPTEXT
+Show list of running containers.
+HELPTEXT
+    echo
+    printf 'Usage: %q %s\n' "$(basename "$1")" '[--unpiped] [DOCKER-PS-ARGS ...] [-?|-h|--help]'
 }
 
-if contains -q "$@" || contains --quiet "$@"; then
+typeset -a args=()
+isPiped=; [ -t 1 -o "$_docker_toterm" ] || isPiped=t
+isQuiet=
+while [ $# -ne 0 ]
+do
+    case "$1" in
+	--help|-h|-\?)	shift; printUsage "$0"; exit 0;;
+	--quiet|-q)	args+=("$1"); shift; isQuiet=t;;
+	--unpiped)	shift; isPiped=;;
+	--)		break;;
+	*)		args+=("$1"); shift;;
+    esac
+done
+set -- "${args[@]}" "$@"
+
+if [ "$isQuiet" ]; then
     # --format takes precedence over --quiet.
     exec docker ps "$@"
 else
-    if [ -t 1 -o "$_docker_toterm" ]; then
-	exec docker ps --format 'table {{.ID}} ({{.Status}})\t{{.Image}}' "$@"
-    else
+    if [ "$isPiped" ]; then
 	# DWIM: When piped into another command or captured, just print the
 	# identifier (--quiet does that along with suppressing the header), so
 	# (assuming only one running container) that it can be combined with
 	# other commands: $ docker exec $(docker ps) -- uname
 	exec docker ps --quiet "$@"
+    else
+	exec docker ps --format 'table {{.ID}} ({{.Status}})\t{{.Image}}' "$@"
     fi
 fi
