@@ -1,9 +1,49 @@
 #!/bin/bash
+set -o pipefail
 
-lastArg=
-if [ $# -gt 0 ]; then
-    lastArg=${!#}
-    exec docker-ps "${@:1:$(($#-1))}" | grep "$lastArg"
-else
-    exec docker-ps --latest
+printUsage()
+{
+    cat <<HELPTEXT
+Grep for EXPR in list of running containers.
+With -- or without arguments, list latest running containers.
+HELPTEXT
+    echo
+    printf 'Usage: %q %s\n' "$(basename "$1")" '[--unpiped] [DOCKER-PS-ARGS ...] [EXPR|--] [-?|-h|--help]'
+}
+
+typeset -a args=()
+isPiped=
+if ! [ -t 1 -o "$_docker_toterm" ]; then
+    isPiped=t
 fi
+while [ $# -ne 0 ]
+do
+    case "$1" in
+	--help|-h|-\?)	shift; printUsage "$0"; exit 0;;
+	--unpiped)	shift; isPiped=;;
+
+	--)		break;;
+	-*)		{ echo "ERROR: Unknown option \"$1\"!"; echo; printUsage "$0"; } >&2; exit 2;;
+	*)		args+=("$1"); shift;;
+    esac
+done
+set -- "${args[@]}" "$@"
+
+filter=
+if [ "$isPiped" ]; then
+    # DWIM: When piped into another command or captured, just print the first
+    # (identifier) column and default to just one line of output, so that it can
+    # be combined with other commands: $ docker exec $(docker psg FOO) -- uname
+    filter='head -n 1 | field 1'
+fi
+
+psg()
+{
+    local lastArg="${!#}"
+    if [ $# -gt 0 -a "$lastArg" != -- ]; then
+	docker-ps --unpiped "${@:1:$(($#-1))}" | grep "$lastArg"
+    else
+	docker-ps --unpiped --latest
+    fi
+}
+eval 'psg "$@"' "${filter:+|}$filter"
