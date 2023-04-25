@@ -28,21 +28,43 @@ do
     esac
 done
 
+typeset -A pagerDisabledCommands=(
+    [bash]=''
+    [bashi]=''
+    [filteredlogs]='-f'
+    [logs]='-f'
+)
+
 pagerDisableCheck()
 {
-    containsGlob '?(filtered)logs' "$@" && contains -f "$@" && pager=()  # Paging would interfere with log following; turn it off.
+    local subCommand
+    if [ -n "$DOCKER_WRAPPER_DISABLE_PAGER" ]; then
+	typeset -a subCommands; read -r -d '' -a subCommands <<<"$DOCKER_WRAPPER_DISABLE_PAGER"
+	for subCommand in "${subCommands[@]}"; do
+	    pagerDisabledCommands["$subCommand"]=''
+	done
+    fi
+
+    for subCommand in "${!pagerDisabledCommands[@]}"
+    do
+	if contains "$subCommand" "$@"; then
+	    if [ -z "${pagerDisabledCommands["$subCommand"]}" ] \
+		|| containsGlob "${pagerDisabledCommands["$subCommand"]}" "$@"
+	    then
+		pager=()
+		return
+	    fi
+	fi
+    done
 }
 
 typeset dockerAlias="docker-$1"
 if [ ${#dockerArgs[@]} -eq 0 -a $# -eq 0 ]; then
     eval 'command docker ${DOCKER_DEFAULT_COMMAND:-ps}' "${pager:+|}" '"${pager[@]}"'
 elif type -t "$dockerAlias" >/dev/null; then
-    shift
-    [[ "$dockerAlias" = docker-bash?(i) ]] && pager=()	# Paging would interfere with the interactive REPL; turn it off.
-    [[ "$dockerAlias" = docker-?(filtered)logs ]] && contains -f "$@" && pager=()  # Paging would interfere with log following; turn it off.
     pagerDisableCheck "$@"
 
-    eval $dockerAlias '"${dockerArgs[@]}" "$@"' "${pager:+|}" '"${pager[@]}"'
+    shift; eval $dockerAlias '"${dockerArgs[@]}" "$@"' "${pager:+|}" '"${pager[@]}"'
 else
     pagerDisableCheck "$@"
 
