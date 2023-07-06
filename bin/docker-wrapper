@@ -33,6 +33,7 @@ typeset -A pagerDisabledCommands=(
     [bashi]=''
     [filteredlogs]='-f'
     [logs]='-f'
+    [run]='-it|-ti'
 )
 
 pagerDisableCheck()
