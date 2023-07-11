@@ -60,8 +60,8 @@ pagerDisableCheck()
 }
 
 typeset dockerAlias="docker-$1"
-if [ ${#dockerArgs[@]} -eq 0 -a $# -eq 0 ]; then
-    eval 'command docker ${DOCKER_DEFAULT_COMMAND:-ps}' "${pager:+|}" '"${pager[@]}"'
+if [ $# -eq 0 ]; then
+    eval 'exec "${BASH_SOURCE[0]}" "${dockerArgs[@]}" ${DOCKER_DEFAULT_COMMAND:-ps}'
 elif type -t "$dockerAlias" >/dev/null; then
     pagerDisableCheck "$@"
 
