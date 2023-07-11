@@ -2,6 +2,8 @@
 set -o pipefail
 shopt -qs extglob
 
+: ${DOCKER_DEFAULT_COMMAND=ps}
+
 # Allow definition of Docker aliases by putting an executable "docker-foo"
 # somewhere in the PATH. Add paging when outputting to the terminal, as docker
 # output can be long, and the command (nor my extensions) doesn't do that on its
@@ -60,8 +62,8 @@ pagerDisableCheck()
 }
 
 typeset dockerAlias="docker-$1"
-if [ $# -eq 0 ]; then
-    eval 'exec "${BASH_SOURCE[0]}" "${dockerArgs[@]}" ${DOCKER_DEFAULT_COMMAND:-ps}'
+if [ $# -eq 0 -a -n "$DOCKER_DEFAULT_COMMAND" ]; then
+    eval "exec \"\${BASH_SOURCE[0]}\" \"\${dockerArgs[@]}\" $DOCKER_DEFAULT_COMMAND"
 elif type -t "$dockerAlias" >/dev/null; then
     pagerDisableCheck "$@"
 
