@@ -2,14 +2,13 @@
 
 dockerArguments=
 if [ "$1" = '--rm' ]; then
-    dockerArguments=$1
-    shift
+    dockerArguments="$1"; shift
 fi
 
-if image=$(docker-locate-image "${1:?}"); then
-    shift
-    exec docker run $dockerArguments -it "$image" bash "$@"
-else
+if ! image="$(docker-locate-image "${1:?}")"; then
     echo >&2 "ERROR: No such image: $1"
     exit 1
 fi
+
+shift
+exec docker run $dockerArguments -it "$image" bash "$@"
