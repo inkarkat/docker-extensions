@@ -1,15 +1,17 @@
 #!/bin/bash
+shopt -qs extglob
 
-dockerArguments=
-if [ "$1" = '--rm' ]; then
-    dockerArguments=$1
-    shift
-fi
+printUsage()
+{
+    cat <<HELPTEXT
+Create and run Bash in a new container from an image.
+HELPTEXT
+    echo
+    printf 'Usage: %q %s\n' "$(basename "$1")" '[DOCKER-RUN-ARGS ...] [--keep-entrypoint] [--] IMAGE [BASH-ARGS ...] [-?|-h|--help]'
+}
 
-if image=$(docker-locate-image "${1:?}"); then
-    shift
-    exec docker run $dockerArguments -it "$image" bash "$@"
-else
-    echo >&2 "ERROR: No such image: $1"
-    exit 1
-fi
+case "$1" in
+    --help|-h|-\?)	shift; printUsage "$0"; exit 0;;
+esac
+
+exec docker-execi -it --command 'bash' "$@"
