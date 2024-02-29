@@ -1,14 +1,41 @@
 #!/bin/bash
+shopt -qs extglob
 
-dockerArguments=
-if [ "$1" = '--rm' ]; then
-    dockerArguments="$1"; shift
-fi
+printUsage()
+{
+    cat <<HELPTEXT
+Create and run Bash in a new container from an image.
+HELPTEXT
+    echo
+    printf 'Usage: %q %s\n' "$(basename "$1")" '[DOCKER-RUN-ARGS ...] [--keep-entrypoint] [--] IMAGE [BASH-ARGS ...] [-?|-h|--help]'
+}
+
+typeset -a dockerArgs=()
+typeset -a entrypointArgs=(--entrypoint bash)
+typeset -a commandPrefixArg=()
+while [ $# -ne 0 ]
+do
+    case "$1" in
+	--help|-h|-\?)	shift; printUsage "$0"; exit 0;;
+
+	-+([diPqt]))	dockerArgs+=("$1"); shift;;
+	--@(detach|init|interactive|no-healthcheck|oom-kill-disable|privileged|publish-all|quiet|read-only|rm|sig-proxy|tty))
+			dockerArgs+=("$1"); shift;;
+	-[acehlmpuvw])	dockerArgs+=("$1" "${2?}"); shift; shift;;
+	--@(add-host|annotation|attach|blkio-weight|blkio-weight-device|cap-add|cap-drop|cgroup-parent|cgroupns|cidfile|cpu-period|cpu-quota|cpu-rt-period|cpu-rt-runtime|cpu-shares|cpus|cpuset-cpus|cpuset-mems|detach-keys|device|device-cgroup-rule|device-read-bps|device-read-iops|device-write-bps|device-write-iops|disable-content-trust|dns|dns-option|dns-search|domainname|env|env-file|expose|gpus|group-add|health-cmd|health-interval|health-retries|health-start-interval|health-start-period|health-timeout|hostname|ip|ip6|ipc|isolation|kernel-memory|label|label-file|link|link-local-ip|log-driver|log-opt|mac-address|memory|memory-reservation|memory-swap|memory-swappiness|mount|name|network|network-alias|oom-score-adj|pid|pids-limit|platform|publish|pull|restart|runtime|security-opt|shm-size|stop-signal|stop-timeout|storage-opt|sysctl|tmpfs|ulimit|user|userns|uts|volume|volume-driver|volumes-from|workdir))
+			dockerArgs+=("$1" "${2?}"); shift; shift;;
+	--entrypoint)	entrypointArgs=("$1" "${2?}"); shift; shift; commandPrefixArg=(bash);;
+	--keep-entrypoint)
+			shift; entrypointArgs=(); commandPrefixArg=(bash);;
+	--)		shift; break;;
+	*)		break;;
+    esac
+done
 
 if ! image="$(docker-locate-image "${1:?}")"; then
     echo >&2 "ERROR: No such image: $1"
     exit 1
 fi
-
 shift
-exec docker run $dockerArguments -it "$image" bash "$@"
+
+exec docker run "${dockerArgs[@]}" "${entrypointArgs[@]}" -it "$image" "${commandPrefixArg[@]}" "$@"
