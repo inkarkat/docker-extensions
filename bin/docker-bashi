@@ -1,10 +1,9 @@
 #!/bin/bash
-shopt -qs extglob
 
 printUsage()
 {
     cat <<HELPTEXT
-Create and run Bash in a new container from an image.
+Create and run Bash in a new container from an IMAGE.
 HELPTEXT
     echo
     printf 'Usage: %q %s\n' "$(basename "$1")" '[DOCKER-RUN-ARGS ...] [--keep-entrypoint] [--] IMAGE [BASH-ARGS ...] [-?|-h|--help]'

@@ -4,7 +4,7 @@ shopt -qs extglob
 printUsage()
 {
     cat <<HELPTEXT
-Create a new container from an image and execute a command in it.
+Create a new container from an IMAGE and execute a COMMAND in it.
 HELPTEXT
     echo
     printf 'Usage: %q %s\n' "$(basename "$1")" '[DOCKER-RUN-ARGS ...] [--keep-entrypoint] [--] IMAGE COMMAND [ARGS ...] [-?|-h|--help]'
