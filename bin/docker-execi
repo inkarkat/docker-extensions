@@ -10,11 +10,25 @@ HELPTEXT
     printf 'Usage: %q %s\n' "$(basename "$1")" '[DOCKER-RUN-ARGS ...] [--keep-entrypoint] [--] IMAGE COMMAND [ARGS ...] [-?|-h|--help]'
 }
 
+EXEC=exec
+reviveDeadContainer()
+{
+    local container; container="$(docker-locate -a "${1:?}")" || return $?; shift
+    local tempImageName="temp-${container:?}"
+    docker commit "$container" "$tempImageName" >/dev/null || return $?
+    printf '%s\n' "$tempImageName"
+}
+cleanupTempImage()
+{
+    docker rmi "${image:?}"
+}
+
 typeset -a dockerArgs=()
 isKeepEntrypoint=
 typeset -a entrypointArgs=()
 typeset -a commandPrefixArg=()
 cmd=
+imageLookupCommand=docker-locate-image
 while [ $# -ne 0 ]
 do
     case "$1" in
@@ -31,12 +45,17 @@ do
 			shift; isKeepEntrypoint=t;;
 
 	--command)	shift; cmd="${1:?}"; shift;;	# Hook for docker-bashi
+	--revive-dead)	shift	# Hook for docker-exec-into-dead
+			imageLookupCommand=reviveDeadContainer	# The passed IMAGE argument actually is a DEAD-CONTAINER argument.
+			EXEC=
+			trap 'cleanupTempImage' EXIT
+			;;
 	--)		shift; break;;
 	*)		break;;
     esac
 done
 
-if ! image="$(docker-locate-image "${1:?}")"; then
+if ! image="$($imageLookupCommand "${1:?}")"; then
     echo >&2 "ERROR: No such image: $1"
     exit 1
 fi
@@ -56,4 +75,4 @@ if [ ! "$isKeepEntrypoint" -a ${#entrypointArgs[@]} -eq 0 ]; then
     entrypointArgs=(--entrypoint "$1"); shift
 fi
 
-exec docker run "${dockerArgs[@]}" "${entrypointArgs[@]}" "$image" "${commandPrefixArg[@]}" "$@"
+$EXEC docker run "${dockerArgs[@]}" "${entrypointArgs[@]}" "$image" "${commandPrefixArg[@]}" "$@"

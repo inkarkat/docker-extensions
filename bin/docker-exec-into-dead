@@ -1,0 +1,17 @@
+#!/bin/bash
+
+printUsage()
+{
+    cat <<HELPTEXT
+Revive a DEAD-CONTAINER (by creating a temp image from it) and execute a COMMAND
+in it.
+HELPTEXT
+    echo
+    printf 'Usage: %q %s\n' "$(basename "$1")" '[DOCKER-RUN-ARGS ...] [--keep-entrypoint] [--] DEAD-CONTAINER COMMAND [ARGS ...] [-?|-h|--help]'
+}
+
+case "$1" in
+    --help|-h|-\?)	shift; printUsage "$0"; exit 0;;
+esac
+
+exec docker-execi --revive-dead "$@"

@@ -1,13 +1,16 @@
-#!/bin/sh
+#!/bin/bash
 
-container=$(docker-locate -a "${1:?}"); shift
-
-finally()
+printUsage()
 {
-    docker rm $(docker ps -aq --filter name=temp_bash) 2>/dev/null
-    docker rmi temp_bash
+    cat <<HELPTEXT
+Run Bash in a revived (by creating a temp image from the) DEAD-CONTAINER.
+HELPTEXT
+    echo
+    printf 'Usage: %q %s\n' "$(basename "$1")" '[DOCKER-RUN-ARGS ...] [--keep-entrypoint] [--] DEAD-CONTAINER [BASH-ARGS ...] [-?|-h|--help]'
 }
-trap 'finally' EXIT
 
-docker commit "$container" temp_bash || exit $?
-docker run --name=temp_bash --entrypoint=bash -it temp_bash "$@"
+case "$1" in
+    --help|-h|-\?)	shift; printUsage "$0"; exit 0;;
+esac
+
+exec docker-exec-into-dead -it --command 'bash' "$@"
