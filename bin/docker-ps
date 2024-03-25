@@ -12,12 +12,14 @@ HELPTEXT
 typeset -a args=()
 isPiped=; [ -t 1 -o "$_docker_toterm" ] || isPiped=t
 isQuiet=
+format=
 while [ $# -ne 0 ]
 do
     case "$1" in
 	--help|-h|-\?)	shift; printUsage "$0"; exit 0;;
 	--quiet|-q)	args+=("$1"); shift; isQuiet=t;;
 	--unpiped)	shift; isPiped=;;
+	--format)	shift; format="${1?}"; shift;;
 	--)		break;;
 	*)		args+=("$1"); shift;;
     esac
@@ -25,16 +27,17 @@ done
 set -- "${args[@]}" "$@"
 
 if [ "$isQuiet" ]; then
-    # --format takes precedence over --quiet.
+    # --quiet takes precedence over --format. Docker would warn about this:
+    # "WARNING: Ignoring custom format, because both --format and --quiet are set."
     exec docker ps "$@"
 else
-    if [ "$isPiped" ]; then
+    if [ "$isPiped" ] && [ -z "$format" ]; then
 	# DWIM: When piped into another command or captured, just print the
 	# identifier (--quiet does that along with suppressing the header), so
 	# (assuming only one running container) that it can be combined with
 	# other commands: $ docker exec $(docker ps) -- uname
 	exec docker ps --quiet "$@"
     else
-	exec docker ps --format 'table {{.ID}} ({{.Status}})\t{{.Image}}' "$@"
+	exec docker ps --format "${format:-table {{.ID\}\} ({{.Status\}\})\t{{.Image\}\}}" "$@"
     fi
 fi
