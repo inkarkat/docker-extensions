@@ -62,9 +62,14 @@ pagerDisableCheck()
     done
 }
 
+typeset dockerSubAlias="docker-$1-$2"
 typeset dockerAlias="docker-$1"
 if [ $# -eq 0 -a -n "$DOCKER_DEFAULT_COMMAND" ]; then
     eval "exec \"\${BASH_SOURCE[0]}\" \"\${dockerArgs[@]}\" $DOCKER_DEFAULT_COMMAND"
+elif type -t "$dockerSubAlias" >/dev/null; then
+    pagerDisableCheck "$@"
+
+    shift; shift; eval $dockerSubAlias '"${dockerArgs[@]}" "$@"' "${pager:+|}" '"${pager[@]}"'
 elif type -t "$dockerAlias" >/dev/null; then
     pagerDisableCheck "$@"
 
