@@ -1,0 +1,25 @@
+#!/bin/bash
+
+printUsage()
+{
+    cat <<HELPTEXT
+Remove local Docker data to free up disk space in /var/lib/docker/overlay2:
+  - all stopped containers
+  - all networks not used by at least one container
+  - all images without at least one container associated to them
+  - all build cache
+  - all anonymous volumes not used by at least one container
+HELPTEXT
+    echo
+    printf 'Usage: %q %s\n' "$(basename "$1")" '[-?|-h|--help]'
+}
+
+case "$1" in
+    --help|-h|-\?)	shift; printUsage "$0"; exit 0;;
+esac
+if [ $# -ne 0 ]; then
+    printUsage "$0" >&2
+    exit 2
+fi
+
+exec docker system prune --all --volumes --force
