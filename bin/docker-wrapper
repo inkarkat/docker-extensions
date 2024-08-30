@@ -35,6 +35,7 @@ typeset -A pagerDisabledCommands=(
     [bashi]=''
     [filteredlogs]='-f'
     [logs]='-f'
+    [multitail]=''
     [pull]=''
     [run]='-it|-ti'
 )

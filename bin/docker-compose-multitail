@@ -1,0 +1,44 @@
+#!/bin/bash
+shopt -qs extglob
+
+printUsage()
+{
+    cat <<HELPTEXT
+View output from containers in split windows using multitail.
+HELPTEXT
+    echo
+    printf 'Usage: %q %s\n' "$(basename "$1")" '[DOCKER-COMPOSE-LOGS-ARGS ...] [MULTITAIL-ARGS ...] [-?|-h|--help]'
+}
+
+typeset -a dockerComposeLogsArgs=()
+typeset -a multitailArgs=()
+while [ $# -ne 0 ]
+do
+    case "$1" in
+	--help|-h|-\?)	shift; printUsage "$0"; exit 0;;
+
+	-+([t]))	dockerComposeLogsArgs+=("$1"); shift;;
+	--@(timestamps))
+			dockerComposeLogsArgs+=("$1"); shift;;
+	-[n])		dockerComposeLogsArgs+=("$1" "${2?}"); shift; shift;;
+	--@(since|tail|until)=*)
+			dockerComposeLogsArgs+=("$1"); shift;;
+	--@(since|tail|until))
+			dockerComposeLogsArgs+=("$1" "${2?}"); shift; shift;;
+
+	--)		multitailArgs+=("$1"); shift; break;;
+	*)		multitailArgs+=("$1"); shift;;
+    esac
+done
+quotedDockerComposeLogsArgs=; [ ${#dockerComposeLogsArgs[@]} -eq 0 ] || printf -v quotedDockerComposeLogsArgs ' %q' "${dockerComposeLogsArgs[@]}"
+
+typeset -a services=()
+readarray -t services < <(docker compose ps --format '{{.Service}}')
+
+typeset -a multitail=()
+for service in "${services[@]}"; do
+    printf -v quotedService %q "$service"
+    multitail+=(-cT ansi -l "docker compose logs --no-log-prefix --follow${quotedDockerComposeLogsArgs} $quotedService")
+done
+
+exec multitail "${multitailArgs[@]}" "${multitail[@]}"
