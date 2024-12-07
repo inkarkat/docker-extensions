@@ -7,8 +7,13 @@ Obtain the passed DOCKER-FORMAT / POD name if empty [for PODs whose names match
 POD-EXPR] for the Kubernetes "pause" container that represents the POD itself /
 for containers matching CONTAINTER-EXPR.
 HELPTEXT
+    echo
     printf 'Usage: %q %s\n' "$(basename "$1")" 'DOCKER-FORMAT [--no-shorten] [-c|--container CONTAINER-EXPR] [--] [POD-EXPR] [-?|-h|--help]'
 }
+
+case "$1" in
+    --help|-h|-\?)	shift; printUsage "$0"; exit 0;;
+esac
 
 queryItem=${1?}; shift
 

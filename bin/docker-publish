@@ -1,5 +1,19 @@
 #!/bin/bash
 
+printUsage()
+{
+    cat <<HELPTEXT
+Tag SOURCE_IMAGE with TARGET_IMAGE:TAG and push it to the registry. With --rm,
+remove the local image after pushing.
+HELPTEXT
+    echo
+    printf 'Usage: %q %s\n' "$(basename "$1")" '[--rm] SOURCE_IMAGE TARGET_IMAGE:TAG [-?|-h|--help]'
+}
+
+case "$1" in
+    --help|-h|-\?)	shift; printUsage "$0"; exit 0;;
+esac
+
 if [ "$1" = '--rm' ]; then
     isUntag=t
     shift

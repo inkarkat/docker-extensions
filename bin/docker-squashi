@@ -1,11 +1,6 @@
 #!/bin/bash
 set -eu
 
-if ! type -t docker-squash >/dev/null; then
-    echo >&2 "docker-squash not found. Install from https://github.com/jwilder/docker-squash first!"
-    exit 1
-fi
-
 printUsage()
 {
     cat <<HELPTEXT
@@ -14,6 +9,7 @@ given.
 Note: If you run out of disk space ("tar: Cannot write: No space left on
 device"), set different temp storage via \$TMPDIR.
 HELPTEXT
+    echo
     printf 'Usage: %q %s\n' "$(basename "$1")" '[-from string] [-keepTemp] [-t string] [-verbose] [-clean] [-?|-h|--help] [-- DOCKER-ARGS] IMAGE'
 }
 
@@ -44,6 +40,11 @@ if [ ! "$isTagged" ]; then
     tempImage=${tempImage}:squashed
     newImage=$tempImage
     allargs+=(-t "$tempImage")
+fi
+
+if ! type -t docker-squash >/dev/null; then
+    echo >&2 "FATAL: docker-squash not found. Install from https://github.com/jwilder/docker-squash first!"
+    exit 1
 fi
 
 set -o pipefail

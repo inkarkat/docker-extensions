@@ -1,4 +1,21 @@
 #!/bin/bash
 # Source: http://stackoverflow.com/a/32622147/813602
 
+printUsage()
+{
+    cat <<HELPTEXT
+Search the Docker registry for tags of a given image.
+HELPTEXT
+    echo
+    printf 'Usage: %q %s\n' "$(basename "$1")" 'IMAGE-NAME [-?|-h|--help]'
+}
+
+case "$1" in
+    --help|-h|-\?)	shift; printUsage "$0"; exit 0;;
+esac
+if [ $# -ne 1 ]; then
+    printUsage "$0" >&2
+    exit 2
+fi
+
 curl -s -S "https://registry.hub.docker.com/v2/repositories/library/${1:?}/tags/" | jq -r '."results"[]["name"]' | sort

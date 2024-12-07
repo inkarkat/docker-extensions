@@ -5,8 +5,13 @@ printUsage()
     cat <<HELPTEXT
 Obtain the virtual network interface [for POD names matching POD-EXPR].
 HELPTEXT
+    echo
     printf 'Usage: %q %s\n' "$(basename "$1")" '[--] [POD-EXPR] [-?|-h|--help]'
 }
+
+case "$1" in
+    --help|-h|-\?)	shift; printUsage "$0"; exit 0;;
+esac
 
 allNetworks=$(ip addr | grep '^[0-9]\+:') || exit $?
 queryNetwork()

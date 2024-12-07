@@ -1,9 +1,19 @@
-#!/bin/sh
+#!/bin/bash
 
-containers=$(docker ps -aq)
-if [ ! "$containers" ]; then
-    echo >&2 "No containers found."
-    exit 1
-fi
+printUsage()
+{
+    cat <<HELPTEXT
+Remove all Docker containers.
+HELPTEXT
+    echo
+    printf 'Usage: %q %s\n' "$(basename "$1")" '[-?|-h|--help]'
+}
 
-exec docker rm $containers
+case "$1" in
+    --help|-h|-\?)	shift; printUsage "$0"; exit 0;;
+esac
+
+readarray -t containers < <(docker ps --all --quiet)
+[ ${#containers[@]} -gt 0 ] || exit 99
+
+exec docker rm "${containers[@]}"
