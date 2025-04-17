@@ -1,13 +1,35 @@
 #!/bin/bash
 shopt -qs extglob
 
+printShortUsage()
+{
+    # Note: short followed by long option; if the user knows the short one, she can
+    # skim the long one.
+    printf 'Usage: %q %s\n' "$(basename "$1")" '[DOCKER-RUN-ARGS ...] [--keep-entrypoint] [--] IMAGE COMMAND [ARGS ...] [-?|-h|--help]'
+}
 printUsage()
 {
-    cat <<HELPTEXT
+    # This is the short help when launched with no or incorrect arguments.
+    # It is printed to stderr to avoid accidental processing.
+    printShortUsage "$1" >&2
+    printf >&2 '\nTry %q --help for more information.\n' "$(basename "$1")"
+}
+printLongUsage()
+{
+    # This is the long "man page" when launched with the help argument.
+    # It is printed to stdout to allow paging with 'more'.
+    cat <<HELPDESCRIPTION
 Create a new container from an IMAGE and execute a COMMAND in it.
-HELPTEXT
+HELPDESCRIPTION
     echo
-    printf 'Usage: %q %s\n' "$(basename "$1")" '[DOCKER-RUN-ARGS ...] [--keep-entrypoint] [--] IMAGE COMMAND [ARGS ...] [-?|-h|--help]'
+    printShortUsage "$1"
+    echo
+    cat <<HELPTEXT
+    --keep-entrypoint	Execute COMMAND after the IMAGE's entrypoint has
+			executed. By default, that built-in entrypoint is
+			replaced with COMMAND (unless an --entrypoint parameter
+			is given as well).
+HELPTEXT
 }
 
 EXEC=exec
@@ -31,7 +53,7 @@ imageLookupCommand=docker-locate-image
 while [ $# -ne 0 ]
 do
     case "$1" in
-	--help|-h|-\?)	shift; printUsage "$0"; exit 0;;
+	--help|-h|-\?)	shift; printLongUsage "$0"; exit 0;;
 
 	-+([diPqt]))	dockerArgs+=("$1"); shift;;
 	--@(detach|init|interactive|no-healthcheck|oom-kill-disable|privileged|publish-all|quiet|read-only|rm|sig-proxy|tty))
