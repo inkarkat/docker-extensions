@@ -6,7 +6,10 @@ readarray -t ids < <(docker-i --quiet "$lastArg")
 case ${#ids[@]} in
     0)	printf >&2 'Warning: Could not locate image: %s' "$lastArg"; id="$lastArg";;
     1)	id="${ids[0]}";;
-    *)	printf >&2 'ERROR: Multiple images found for %s: %s\n' "$lastArg" "$(joinBy ', ' "${ids[@]}")"; exit 1;;
+    *)	printf >&2 'ERROR: Multiple images found for %s; please be more specific:\n' "$lastArg"
+	docker-i --format '{{.Repository}}:{{.Tag}}' "$lastArg"
+	exit 1
+	;;
 esac
 
 printf '%s\n' "$id"
