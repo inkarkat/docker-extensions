@@ -5,7 +5,7 @@ printShortUsage()
 {
     # Note: short followed by long option; if the user knows the short one, she can
     # skim the long one.
-    printf 'Usage: %q %s\n' "$(basename "$1")" '[DOCKER-RUN-ARGS ...] [--keep-entrypoint] [--] IMAGE COMMAND [ARGS ...] [-?|-h|--help]'
+    printf 'Usage: %q %s\n' "$(basename "$1")" '[DOCKER-RUN-ARGS ...] [--keep-entrypoint] [--mount-cwd[-ro]] [--] IMAGE COMMAND [ARGS ...] [-?|-h|--help]'
 }
 printUsage()
 {
@@ -29,6 +29,11 @@ HELPDESCRIPTION
 			executed. By default, that built-in entrypoint is
 			replaced with COMMAND (unless an --entrypoint parameter
 			is given as well).
+    --mount-cwd		Mount the current directory into the container under
+			/mnt and set the working directory to that.
+    --mount-cwd-ro	Mount the current directory into the container under
+			/mnt in read-only mode and set the working directory to
+			that.
 HELPTEXT
 }
 
@@ -64,6 +69,8 @@ do
 	--entrypoint)	entrypointArgs=("$1" "${2?}"); shift; shift;;
 	--keep-entrypoint)
 			shift; isKeepEntrypoint=t;;
+	--mount-cwd)	shift; dockerArgs+=(--volume "${PWD}:/mnt" --workdir /mnt);;
+	--mount-cwd-ro)	shift; dockerArgs+=(--volume "${PWD}:/mnt:ro" --workdir /mnt);;
 
 	--command)	shift; cmd="${1:?}"; shift;;	# Hook for docker-bashi
 	--revive-dead)	shift	# Hook for docker-exec-into-dead
