@@ -26,7 +26,6 @@ cleanupTempImage()
 typeset -a dockerArgs=()
 isKeepEntrypoint=
 typeset -a entrypointArgs=()
-typeset -a commandPrefixArg=()
 cmd=
 imageLookupCommand=docker-locate-image
 while [ $# -ne 0 ]
@@ -75,4 +74,4 @@ if [ ! "$isKeepEntrypoint" -a ${#entrypointArgs[@]} -eq 0 ]; then
     entrypointArgs=(--entrypoint "$1"); shift
 fi
 
-$EXEC docker run "${dockerArgs[@]}" "${entrypointArgs[@]}" "$image" "${commandPrefixArg[@]}" "$@"
+$EXEC docker run "${dockerArgs[@]}" "${entrypointArgs[@]}" "$image" "$@"
