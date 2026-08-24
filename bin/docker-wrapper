@@ -4,7 +4,7 @@ shopt -qs extglob
 
 : ${DOCKER_DEFAULT_COMMAND=ps}
 
-# Allow definition of Docker aliases by putting an executable "docker-foo"
+# Allow definition of Docker extensions by putting an executable "docker-foo"
 # somewhere in the PATH. Add paging when outputting to the terminal, as docker
 # output can be long, and the command (nor my extensions) doesn't do that on its
 # own.
@@ -65,16 +65,16 @@ pagerDisableCheck()
 
 [ $# -eq 0 -a -n "$DOCKER_DEFAULT_COMMAND" ] && set -- "$DOCKER_DEFAULT_COMMAND"
 
-typeset dockerSubAlias="docker-$1-$2"
-typeset dockerAlias="docker-$1"
-if type -t "$dockerSubAlias" >/dev/null; then
+typeset dockerSubExtension="docker-$1-$2"
+typeset dockerExtension="docker-$1"
+if type -t "$dockerSubExtension" >/dev/null; then
     pagerDisableCheck "$@"
 
-    shift; shift; eval $dockerSubAlias '"${dockerArgs[@]}" "$@"' "${pager:+|}" '"${pager[@]}"'
-elif type -t "$dockerAlias" >/dev/null; then
+    shift; shift; eval $dockerSubExtension '"${dockerArgs[@]}" "$@"' "${pager:+|}" '"${pager[@]}"'
+elif type -t "$dockerExtension" >/dev/null; then
     pagerDisableCheck "$@"
 
-    shift; eval $dockerAlias '"${dockerArgs[@]}" "$@"' "${pager:+|}" '"${pager[@]}"'
+    shift; eval $dockerExtension '"${dockerArgs[@]}" "$@"' "${pager:+|}" '"${pager[@]}"'
 else
     pagerDisableCheck "$@"
 
