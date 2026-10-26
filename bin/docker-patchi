@@ -1,5 +1,7 @@
 #!/bin/bash
 
+${DEBUG:+eval $(debugtrace -o $- -- "$@")}
+
 printUsage()
 {
     cat <<HELPTEXT
@@ -11,6 +13,7 @@ HELPTEXT
 case "$1" in
     --help|-h|-\?)	shift; printUsage "$0"; exit 0;;
 esac
+
 isOverwrite=
 tag=
 typeset -a allargs=()
@@ -40,6 +43,8 @@ fi
 
 tempDirspec="$(mktemp --directory --tmpdir "$(basename -- "$0")-XXXXXX" 2>/dev/null || { dirspec="${TMPDIR:-/tmp}/$(basename -- "$0").$$$RANDOM"; mkdir -p -- "$dirspec" && printf %s "$dirspec"; })" || exit $?
 trap '${DEBUG:+debugcommand --module cleanup --} rm -rf -- "$tempDirspec" 2>/dev/null' EXIT
+
+${DEBUG:+eval $(debugtrace --point main -o $- --)}
 
 printf "FROM %s\n" "$baseImage" > "${tempDirspec}/Dockerfile"
 
