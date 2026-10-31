@@ -3,26 +3,40 @@
 : ${DOCKER_SINGLE_CONTAINER_MARKER='{}'}
 containerMarker="$DOCKER_SINGLE_CONTAINER_MARKER"; unset DOCKER_SINGLE_CONTAINER_MARKER
 
-printUsage()
+LONGUSAGE=
+printLongUsage()
 {
-    cat <<HELPTEXT
+    # This is the long "man page" when launched with the help argument.
+    # It is printed to stdout to allow paging with 'more'.
+    $LONGUSAGE cat <<HELPTEXT
 Execute DOCKER-COMMAND with the ID of the single running Docker container
 (${containerMarker:+either }appended to${containerMarker:+ or replacing any $containerMarker marker inside} SIMPLECOMMAND).
 HELPTEXT
-    echo
+    $LONGUSAGE echo
     printf 'Usage: %q %s\n' "$(basename "$1")" '[--] DOCKER-COMMAND [...] [-?|-h|--help]'
-    echo
-    cat <<HELPTEXT
+    $LONGUSAGE echo
+    $LONGUSAGE cat <<HELPTEXT
 Succeed if a single Docker container is running.
 HELPTEXT
-    echo
+    $LONGUSAGE echo
     printf 'Usage: %q\n' "$(basename "$1")"
+}
+printShortUsage()
+{
+    LONGUSAGE=: printLongUsage "$1"
+}
+printUsage()
+{
+    # This is the short help when launched with no or incorrect arguments.
+    # It is printed to stderr to avoid accidental processing.
+    printShortUsage "$1" >&2
+    printf >&2 '\nTry %q --help for more information.\n' "$(basename "$1")"
 }
 
 while [ $# -ne 0 ]
 do
     case "$1" in
-	--help|-h|-\?)	shift; printUsage "$0"; exit 0;;
+	--help|-h|-\?)	shift; printLongUsage "$0"; exit 0;;
 	--)		shift; break;;
 	-*)		{ echo "ERROR: Unknown option \"$1\"!"; echo; printUsage "$0"; } >&2; exit 2;;
 	*)		break;;
